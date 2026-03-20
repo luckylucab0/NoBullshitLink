@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Cleaner – Einstellungen</title>
+  <style>
+    /* Grundlegendes Styling des Popups */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      width: 320px;
+      padding: 20px;
+      background: #fff;
+      color: #333;
+    }
+
+    /* Kopfzeile mit Icon und Titel */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .header-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .header p {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    /* Formularelemente */
+    .form-gruppe {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #333;
+      background: #fafafa;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+
+    input[type="password"]:focus {
+      border-color: #0a66c2;
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.15);
+    }
+
+    /* Hinweistext unter dem Input */
+    .hinweis {
+      font-size: 11px;
+      color: #888;
+      margin-top: 5px;
+      line-height: 1.4;
+    }
+
+    .hinweis a {
+      color: #0a66c2;
+      text-decoration: none;
+    }
+
+    .hinweis a:hover {
+      text-decoration: underline;
+    }
+
+    /* Speichern-Button */
+    .btn-speichern {
+      width: 100%;
+      padding: 10px;
+      background: #0a66c2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-speichern:hover {
+      background: #0957a8;
+    }
+
+    .btn-speichern:active {
+      background: #0849901;
+    }
+
+    /* Bestätigungs- und Fehlermeldungen */
+    .meldung {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none; /* Standardmäßig ausgeblendet */
+    }
+
+    .meldung.erfolg {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+
+    .meldung.fehler {
+      background: #fde8e8;
+      color: #c62828;
+      border: 1px solid #f5c6c6;
+    }
+
+    .meldung.sichtbar {
+      display: block;
+    }
+
+    /* Status des gespeicherten Keys */
+    .key-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .key-status .indikator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ccc;
+      flex-shrink: 0;
+    }
+
+    .key-status.gesetzt .indikator {
+      background: #4caf50;
+    }
+
+    /* Trennlinie */
+    .trennlinie {
+      border: none;
+      border-top: 1px solid #e5e5e5;
+      margin: 16px 0;
+    }
+
+    /* Info-Bereich unten */
+    .info {
+      font-size: 11px;
+      color: #999;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Kopfzeile -->
+  <div class="header">
+    <span class="header-icon">🧹</span>
+    <div>
+      <h1>LinkedIn Cleaner</h1>
+      <p>LinkedIn-Speak in Klartext übersetzen</p>
+    </div>
+  </div>
+
+  <!-- API-Key Formular -->
+  <div class="form-gruppe">
+    <label for="apiKey">Anthropic API-Key</label>
+    <input
+      type="password"
+      id="apiKey"
+      placeholder="sk-ant-api03-..."
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <p class="hinweis">
+      Den API-Key gibt es unter
+      <a href="https://console.anthropic.com/settings/keys" target="_blank">
+        console.anthropic.com
+      </a>.
+      Er wird nur lokal in deinem Browser gespeichert.
+    </p>
+
+    <!-- Zeigt an ob bereits ein Key gespeichert ist -->
+    <div class="key-status" id="keyStatus">
+      <span class="indikator"></span>
+      <span id="keyStatusText">Kein API-Key gespeichert</span>
+    </div>
+  </div>
+
+  <!-- Speichern-Button -->
+  <button class="btn-speichern" id="btnSpeichern">
+    API-Key speichern
+  </button>
+
+  <!-- Rückmeldung nach dem Speichern -->
+  <div class="meldung erfolg" id="meldungErfolg">
+    ✓ API-Key erfolgreich gespeichert!
+  </div>
+  <div class="meldung fehler" id="meldungFehler">
+    ✗ Bitte einen gültigen API-Key eingeben.
+  </div>
+
+  <hr class="trennlinie" />
+
+  <!-- Kurzanleitung -->
+  <div class="info">
+    <strong>So funktioniert's:</strong><br />
+    Öffne deinen LinkedIn-Feed. Unter jedem Post erscheint ein
+    „🧹 Aufräumen"-Button. Beim Klick wird der Post analysiert und
+    als nüchterner Klartext angezeigt.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

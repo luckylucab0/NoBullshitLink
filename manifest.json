@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Cleaner",
+  "version": "1.0.0",
+  "description": "Übersetzt aufgeblasenes LinkedIn-Speak in klares, ehrliches Deutsch – mit Hilfe von Claude AI.",
+
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+
+  "host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://api.anthropic.com/*"
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LinkedIn Cleaner Einstellungen"
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/feed/*", "https://www.linkedin.com/"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
