@@ -4,65 +4,73 @@
 
 // ============================================================
 // SELEKTOREN – hier anpassen, wenn LinkedIn sein DOM ändert
-// LinkedIn aktualisiert regelmäßig seine CSS-Klassen und Struktur.
-// Alle Selektoren an einem Ort zu halten, erleichtert spätere Anpassungen.
+// Reihenfolge: spezifischste/neueste zuerst, ältere als Fallback
 // ============================================================
 const SELEKTOREN = {
   // Container für einzelne Feed-Posts
+  // [data-urn*="activity"] trifft LinkedIn-Posts zuverlässig anhand der URN
   postContainer: [
+    "[data-urn*='urn:li:activity']",
+    "[data-urn*='urn:li:share']",
+    "[data-urn*='urn:li:ugcPost']",
     ".feed-shared-update-v2",
-    "[data-urn]",
     ".occludable-update",
   ],
 
   // Wo der eigentliche Text des Posts steht
   postText: [
-    ".feed-shared-update-v2__description",
-    ".feed-shared-text",
     ".update-components-text",
-    "[data-test-id='main-feed-activity-card__commentary']",
-    ".feed-shared-inline-show-more-text",
+    ".feed-shared-text",
     ".attributed-text-segment-list__content",
+    ".feed-shared-update-v2__description",
+    ".feed-shared-inline-show-more-text",
+    "[data-test-id='main-feed-activity-card__commentary']",
+    ".break-words",           // neuerer LinkedIn-Selektor
+    ".feed-shared-text-view", // weiterer Fallback
   ],
 
   // Die Aktionsleiste unter einem Post (Gefällt mir, Kommentieren, etc.)
   aktionsleiste: [
     ".feed-shared-social-action-bar",
     ".social-actions-bar",
-    ".feed-shared-update-v2__social-actions",
     ".update-v2-social-activity",
+    ".feed-shared-update-v2__social-actions",
+    "[data-test-id='social-actions-bar']",
+    // Neuere LinkedIn-Struktur: Elemente mit Reaktions-Buttons
+    ".feed-shared-footer",
+    ".update-components-footer",
   ],
 };
 
 // Markierung, die wir an bereits verarbeitete Posts hängen
-// damit wir sie nicht doppelt verarbeiten
-const VERARBEITET_MARKER = "linkedin-cleaner-verarbeitet";
+const VERARBEITET_MARKER = "linkedinCleaner";
 
 // ============================================================
-// Hilfsfunktion: Findet ein Element innerhalb eines Containers
-// anhand einer Liste von möglichen Selektoren (Fallback-Kette)
+// Hilfsfunktion: Findet ein Element anhand einer Fallback-Kette
 // ============================================================
 function findeElement(container, selektorListe) {
   for (const selektor of selektorListe) {
-    const element = container.querySelector(selektor);
-    if (element) return element;
+    try {
+      const element = container.querySelector(selektor);
+      if (element) return element;
+    } catch (e) {
+      // Ungültiger Selektor – überspringen
+    }
   }
   return null;
 }
 
 // ============================================================
-// Post-Text extrahieren: Holt den reinen Text aus einem Post-Container
+// Post-Text extrahieren
 // ============================================================
 function extrahierePostText(postContainer) {
   const textElement = findeElement(postContainer, SELEKTOREN.postText);
   if (!textElement) return null;
-
-  // Inneren Text nehmen und mehrfache Leerzeichen/Zeilenumbrüche bereinigen
   return textElement.innerText?.trim().replace(/\n{3,}/g, "\n\n") || null;
 }
 
 // ============================================================
-// Button erstellen: Erzeugt den "🧹 Aufräumen"-Button
+// Button erstellen
 // ============================================================
 function erstelleButton() {
   const button = document.createElement("button");
@@ -73,7 +81,7 @@ function erstelleButton() {
 }
 
 // ============================================================
-// Ergebniskarte erstellen: Zeigt den bereinigten Text an
+// Ergebniskarte erstellen
 // ============================================================
 function erstelleErgebniskarte(text) {
   const karte = document.createElement("div");
@@ -85,7 +93,7 @@ function erstelleErgebniskarte(text) {
   return karte;
 }
 
-// Sicherheitsfunktion: HTML-Sonderzeichen escapen um XSS zu verhindern
+// XSS-Schutz: HTML-Sonderzeichen escapen
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.appendChild(document.createTextNode(text));
@@ -94,31 +102,39 @@ function escapeHtml(text) {
 
 // ============================================================
 // Hauptfunktion: Verarbeitet einen einzelnen Post-Container
-// Fügt den Button hinzu und verdrahtet die Logik
 // ============================================================
 function verarbeitePost(postContainer) {
   // Nicht doppelt verarbeiten
   if (postContainer.dataset[VERARBEITET_MARKER]) return;
+
+  // Nur echte Post-Container verarbeiten (müssen eine bestimmte Mindestgröße haben)
+  if (postContainer.offsetHeight < 50) return;
+
   postContainer.dataset[VERARBEITET_MARKER] = "true";
 
-  // Aktionsleiste finden (wo wir den Button einhängen)
-  const aktionsleiste = findeElement(postContainer, SELEKTOREN.aktionsleiste);
-  if (!aktionsleiste) return; // Ohne Aktionsleiste kein guter Platz für den Button
-
-  // Button-Wrapper erstellen und Button einhängen
+  // Button-Wrapper erstellen
   const buttonWrapper = document.createElement("div");
   buttonWrapper.className = "linkedin-cleaner-btn-wrapper";
   const button = erstelleButton();
   buttonWrapper.appendChild(button);
-  aktionsleiste.appendChild(buttonWrapper);
+
+  // Versuch 1: Button in die Aktionsleiste hängen
+  const aktionsleiste = findeElement(postContainer, SELEKTOREN.aktionsleiste);
+  if (aktionsleiste) {
+    aktionsleiste.appendChild(buttonWrapper);
+  } else {
+    // Fallback: Button direkt unten am Post-Container anhängen
+    buttonWrapper.classList.add("linkedin-cleaner-btn-wrapper--fallback");
+    postContainer.appendChild(buttonWrapper);
+  }
 
   // Zustandsvariablen für diesen Post
-  let karte = null;      // Die eingeblendete Ergebniskarte
-  let laedt = false;    // Verhindert Doppelklicks während des Ladens
+  let karte = null;
+  let laedt = false;
 
-  // Klick-Handler für den Button
+  // Klick-Handler
   button.addEventListener("click", async () => {
-    // Wenn Karte bereits sichtbar: ausblenden (Toggle)
+    // Toggle: Karte ausblenden wenn bereits sichtbar
     if (karte) {
       karte.remove();
       karte = null;
@@ -127,13 +143,11 @@ function verarbeitePost(postContainer) {
       return;
     }
 
-    // Doppelklick verhindern
     if (laedt) return;
     laedt = true;
     button.innerHTML = "⏳ Übersetze...";
     button.disabled = true;
 
-    // Post-Text extrahieren
     const postText = extrahierePostText(postContainer);
     if (!postText) {
       zeigeFehler(postContainer, "Kein Text im Post gefunden.");
@@ -143,14 +157,12 @@ function verarbeitePost(postContainer) {
       return;
     }
 
-    // Anfrage an background.js senden (der macht den API-Call)
     chrome.runtime.sendMessage(
-      { action: "cleanPost", postText: postText },
+      { action: "cleanPost", postText },
       (antwort) => {
         laedt = false;
         button.disabled = false;
 
-        // Verbindungsfehler zur Extension
         if (chrome.runtime.lastError) {
           button.innerHTML = "🧹 Aufräumen";
           zeigeFehler(postContainer, "Verbindung zur Extension unterbrochen.");
@@ -158,14 +170,11 @@ function verarbeitePost(postContainer) {
         }
 
         if (antwort.success) {
-          // Erfolg: Ergebniskarte einblenden
           button.innerHTML = "✕ Schließen";
           karte = erstelleErgebniskarte(antwort.text);
-          // Karte wird nach dem Post-Container eingefügt
           postContainer.after(karte);
         } else {
           button.innerHTML = "🧹 Aufräumen";
-          // Fehlermeldung je nach Fehlertyp anpassen
           if (antwort.error === "KEIN_API_KEY") {
             zeigeFehler(
               postContainer,
@@ -184,48 +193,42 @@ function verarbeitePost(postContainer) {
 }
 
 // ============================================================
-// Fehlermeldung anzeigen: Zeigt eine temporäre Fehlerkarte
-// Die Karte verschwindet nach 5 Sekunden automatisch
+// Fehlermeldung anzeigen (verschwindet nach 5 Sekunden)
 // ============================================================
 function zeigeFehler(postContainer, nachricht) {
   const fehlerKarte = document.createElement("div");
   fehlerKarte.className = "linkedin-cleaner-karte linkedin-cleaner-fehler";
   fehlerKarte.innerHTML = `<p class="linkedin-cleaner-text">⚠️ ${escapeHtml(nachricht)}</p>`;
   postContainer.after(fehlerKarte);
-
-  // Nach 5 Sekunden automatisch ausblenden
   setTimeout(() => fehlerKarte.remove(), 5000);
 }
 
 // ============================================================
-// MutationObserver: Beobachtet den Feed auf neu geladene Posts
-// LinkedIn lädt Posts dynamisch nach (Infinite Scroll), daher
-// reicht es nicht, einmalig beim Laden der Seite zu scannen.
+// Alle vorhandenen Posts scannen und verarbeiten
+// ============================================================
+function scanneSeite() {
+  for (const selektor of SELEKTOREN.postContainer) {
+    try {
+      document.querySelectorAll(selektor).forEach(verarbeitePost);
+    } catch (e) {
+      // Ungültiger Selektor – überspringen
+    }
+  }
+}
+
+// ============================================================
+// MutationObserver: Reagiert auf dynamisch nachgeladene Posts
 // ============================================================
 function starteMutationObserver() {
-  const observer = new MutationObserver((mutationen) => {
-    for (const mutation of mutationen) {
-      for (const node of mutation.addedNodes) {
-        if (node.nodeType !== Node.ELEMENT_NODE) continue;
+  let scanTimeout = null;
 
-        // Prüfen ob der neue Node selbst ein Post-Container ist
-        for (const selektor of SELEKTOREN.postContainer) {
-          if (node.matches && node.matches(selektor)) {
-            verarbeitePost(node);
-            break;
-          }
-        }
-
-        // Auch nach Post-Containern innerhalb des neuen Nodes suchen
-        for (const selektor of SELEKTOREN.postContainer) {
-          const posts = node.querySelectorAll(selektor);
-          posts.forEach(verarbeitePost);
-        }
-      }
-    }
+  const observer = new MutationObserver(() => {
+    // Statt jeden einzelnen Node sofort zu prüfen, kurz warten
+    // und dann die ganze Seite scannen (robuster bei komplexen DOM-Updates)
+    clearTimeout(scanTimeout);
+    scanTimeout = setTimeout(scanneSeite, 300);
   });
 
-  // Den gesamten Body beobachten auf neue Kindelemente
   observer.observe(document.body, {
     childList: true,
     subtree: true,
@@ -233,20 +236,17 @@ function starteMutationObserver() {
 }
 
 // ============================================================
-// Initialisierung: Beim ersten Laden der Seite bestehende Posts
-// verarbeiten und dann den Observer starten
+// Initialisierung
 // ============================================================
 function initialisiere() {
-  // Bereits vorhandene Posts verarbeiten
-  for (const selektor of SELEKTOREN.postContainer) {
-    document.querySelectorAll(selektor).forEach(verarbeitePost);
-  }
-
-  // Observer starten für dynamisch nachgeladene Posts
+  scanneSeite();
   starteMutationObserver();
+
+  // Zweiter Scan nach 2 Sekunden als Sicherheitsnetz,
+  // falls LinkedIn den Feed verzögert rendert
+  setTimeout(scanneSeite, 2000);
 }
 
-// Starten sobald das DOM bereit ist
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initialisiere);
 } else {

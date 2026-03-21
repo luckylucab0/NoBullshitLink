@@ -15,6 +15,14 @@
   padding: 0 8px;
 }
 
+/* Fallback: wenn keine Aktionsleiste gefunden wurde, Button am unteren Rand des Posts */
+.linkedin-cleaner-btn-wrapper--fallback {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 12px 10px 12px;
+  margin-left: 0;
+}
+
 .linkedin-cleaner-btn {
   /* Grundlegendes Aussehen */
   display: inline-flex;
