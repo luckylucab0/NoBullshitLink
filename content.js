@@ -183,7 +183,7 @@ function verarbeitePost(postContainer) {
           } else {
             zeigeFehler(
               postContainer,
-              "Übersetzung fehlgeschlagen – bitte erneut versuchen."
+              "Übersetzung fehlgeschlagen: " + (antwort.error || "Unbekannter Fehler")
             );
           }
         }

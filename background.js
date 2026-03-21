@@ -52,7 +52,7 @@ async function handleCleanPost(postText) {
 
   // API-Anfrage zusammenbauen
   const requestBody = {
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-5",
     max_tokens: 300,
     system: SYSTEM_PROMPT,
     messages: [
