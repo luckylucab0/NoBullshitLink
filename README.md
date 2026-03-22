@@ -56,4 +56,4 @@ Im Popup unten: **"Nach Update suchen"** vergleicht die installierte Version mit
 
 ## Lizenz
 
-MIT
+GPL v3 – abgeleitete Projekte müssen ebenfalls Open Source bleiben.
