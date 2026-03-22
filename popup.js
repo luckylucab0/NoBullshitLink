@@ -102,6 +102,59 @@ btnSpeichern.addEventListener("click", () => {
   });
 });
 
+// ============================================================
+// Update-Prüfung via GitHub Releases API
+// ============================================================
+const btnUpdate = document.getElementById("btnUpdate");
+const updateStatus = document.getElementById("updateStatus");
+const aktuelleVersionSpan = document.getElementById("aktuelleVersion");
+
+const GITHUB_REPO = "luckylucab0/NoBullshitLink";
+const RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+const RELEASES_PAGE = `https://github.com/${GITHUB_REPO}/releases/latest`;
+
+// Aktuelle Version aus dem Manifest lesen und anzeigen
+const { version: AKTUELLE_VERSION } = chrome.runtime.getManifest();
+aktuelleVersionSpan.textContent = AKTUELLE_VERSION;
+
+// Semver-Vergleich: gibt true zurück wenn remote > lokal
+function istNeuer(lokal, remote) {
+  const parse = (v) => v.replace(/^v/, "").split(".").map(Number);
+  const [lM, lm, lp] = parse(lokal);
+  const [rM, rm, rp] = parse(remote);
+  return rM > lM || (rM === lM && rm > lm) || (rM === lM && rm === lm && rp > lp);
+}
+
+btnUpdate.addEventListener("click", async () => {
+  btnUpdate.disabled = true;
+  updateStatus.className = "update-status";
+  updateStatus.textContent = "Prüfe...";
+
+  try {
+    const res = await fetch(RELEASES_URL, {
+      headers: { "Accept": "application/vnd.github+json" },
+    });
+
+    if (!res.ok) throw new Error(`GitHub API: HTTP ${res.status}`);
+
+    const release = await res.json();
+    const neueVersion = release.tag_name;
+
+    if (istNeuer(AKTUELLE_VERSION, neueVersion)) {
+      updateStatus.className = "update-status verfuegbar";
+      updateStatus.innerHTML = `${neueVersion} verfügbar – <a href="${RELEASES_PAGE}" target="_blank">Herunterladen</a>`;
+    } else {
+      updateStatus.className = "update-status aktuell";
+      updateStatus.textContent = `v${AKTUELLE_VERSION} – Aktuell`;
+    }
+  } catch (err) {
+    updateStatus.className = "update-status";
+    updateStatus.textContent = "Fehler beim Prüfen.";
+  } finally {
+    btnUpdate.disabled = false;
+  }
+});
+
 // Enter-Taste im Input-Feld löst ebenfalls das Speichern aus
 eingabeApiKey.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {

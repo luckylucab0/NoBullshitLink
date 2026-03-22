@@ -201,6 +201,56 @@
       color: #999;
       line-height: 1.5;
     }
+
+    /* Update-Bereich */
+    .update-bereich {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn-update {
+      padding: 6px 12px;
+      background: #f0f0f0;
+      color: #444;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-update:hover {
+      background: #e4e4e4;
+    }
+
+    .btn-update:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .update-status {
+      font-size: 11px;
+      color: #999;
+      flex: 1;
+      text-align: right;
+    }
+
+    .update-status.aktuell {
+      color: #4caf50;
+    }
+
+    .update-status.verfuegbar {
+      color: #e65100;
+    }
+
+    .update-status a {
+      color: #e65100;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -271,6 +321,12 @@
     Öffne deinen LinkedIn-Feed. Unter jedem Post erscheint ein
     „🧹 Aufräumen"-Button. Beim Klick wird der Post analysiert und
     als nüchterner Klartext angezeigt.
+  </div>
+
+  <!-- Update-Prüfung -->
+  <div class="update-bereich">
+    <button class="btn-update" id="btnUpdate">Nach Update suchen</button>
+    <span class="update-status" id="updateStatus">v<span id="aktuelleVersion"></span></span>
   </div>
 
   <script src="popup.js"></script>
