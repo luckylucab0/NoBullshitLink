@@ -26,6 +26,18 @@ const PROVIDER_CONFIG = {
     linkText: "platform.openai.com",
     linkHref: "https://platform.openai.com/api-keys",
   },
+  mistral: {
+    label: "Mistral API-Key",
+    placeholder: "...",
+    linkText: "console.mistral.ai",
+    linkHref: "https://console.mistral.ai/api-keys",
+  },
+  gemini: {
+    label: "Google Gemini API-Key",
+    placeholder: "AIza...",
+    linkText: "aistudio.google.com",
+    linkHref: "https://aistudio.google.com/app/apikey",
+  },
 };
 
 // Aktualisiert Label, Placeholder und Hinweislink passend zum gewählten Provider

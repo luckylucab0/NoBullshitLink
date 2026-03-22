@@ -67,6 +67,35 @@ const PROVIDERS = {
     }),
     extractText: (data) => data?.choices?.[0]?.message?.content,
   },
+  mistral: {
+    url: "https://api.mistral.ai/v1/chat/completions",
+    buildHeaders: (key) => ({
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key}`,
+    }),
+    buildBody: (text) => ({
+      model: "mistral-small-latest",
+      max_tokens: 300,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: text },
+      ],
+    }),
+    extractText: (data) => data?.choices?.[0]?.message?.content,
+  },
+  gemini: {
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+    buildHeaders: (key) => ({
+      "Content-Type": "application/json",
+      "x-goog-api-key": key,
+    }),
+    buildBody: (text) => ({
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ parts: [{ text }] }],
+      generationConfig: { maxOutputTokens: 300 },
+    }),
+    extractText: (data) => data?.candidates?.[0]?.content?.parts?.[0]?.text,
+  },
 };
 
 // Nachrichtenempfänger: Hört auf Anfragen aus content.js

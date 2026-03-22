@@ -12,7 +12,9 @@
   "host_permissions": [
     "https://www.linkedin.com/*",
     "https://api.anthropic.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://api.mistral.ai/*",
+    "https://generativelanguage.googleapis.com/*"
   ],
 
   "action": {
