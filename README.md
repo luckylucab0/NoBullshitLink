@@ -9,7 +9,7 @@ Eine Browser-Extension, die aufgeblasenes LinkedIn-Sprech in ehrlichen Klartext 
 
 ## Was es macht
 
-Unter jedem LinkedIn-Post erscheint ein **🧹 Aufräumen**-Button. Ein Klick schickt den Post an ein KI-Modell deiner Wahl – zurück kommt das, was die Person ihrem besten Freund per WhatsApp geschrieben hätte. Kurz, direkt, ohne Verpackung.
+Unter jedem LinkedIn-Post erscheint ein **🧹 Aufräumen**-Button. Ein Klick schickt den Post an ein KI-Modell deiner Wahl
 
 ---
 
