@@ -1,10 +1,10 @@
 // background.js – Service Worker der Extension
-// Dieser Hintergrundprozess übernimmt die API-Kommunikation mit Anthropic.
+// Dieser Hintergrundprozess übernimmt die API-Kommunikation mit dem gewählten Anbieter.
 // Warum hier statt im content.js? Browser erlauben keine direkten API-Aufrufe
 // von Content Scripts an externe Dienste (CORS-Beschränkung). Der Service Worker
 // hat diese Einschränkung nicht.
 
-// System-Prompt: Gibt Claude genaue Anweisungen, wie LinkedIn-Posts zu übersetzen sind
+// System-Prompt: Gibt dem Modell genaue Anweisungen, wie LinkedIn-Posts zu übersetzen sind
 const SYSTEM_PROMPT = `Du übersetzt LinkedIn-Posts zurück in das, was die Person ihrem besten Freund per WhatsApp geschrieben hätte.
 
 Dein Output ist immer: eine kurze, direkte, unverpackte Aussage – so wie man es wirklich sagen würde, ohne Publikum, ohne persönliche Marke, ohne Netzwerk das zuhört.
@@ -33,8 +33,41 @@ Input: "I'm incredibly humbled and grateful to announce I've joined XYZ Corp as 
 Output: "Ich habe einen neuen Job."`;
 
 
-// Anthropic API-Endpunkt
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+// Provider-Konfigurationen: Jeder Eintrag beschreibt wie ein API-Anbieter angesprochen wird
+const PROVIDERS = {
+  anthropic: {
+    url: "https://api.anthropic.com/v1/messages",
+    buildHeaders: (key) => ({
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    }),
+    buildBody: (text) => ({
+      model: "claude-sonnet-4-5",
+      max_tokens: 300,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: text }],
+    }),
+    extractText: (data) => data?.content?.[0]?.text,
+  },
+  openai: {
+    url: "https://api.openai.com/v1/chat/completions",
+    buildHeaders: (key) => ({
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key}`,
+    }),
+    buildBody: (text) => ({
+      model: "gpt-4o-mini",
+      max_tokens: 300,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: text },
+      ],
+    }),
+    extractText: (data) => data?.choices?.[0]?.message?.content,
+  },
+};
 
 // Nachrichtenempfänger: Hört auf Anfragen aus content.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -50,10 +83,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true; // Hält den Nachrichtenkanal offen für die asynchrone Antwort
 });
 
-// Hauptfunktion: Holt den API-Key und sendet den Post an Claude
+// Hauptfunktion: Holt Provider + API-Key aus Storage und sendet den Post an die API
 async function handleCleanPost(postText) {
-  // API-Key aus dem lokalen Speicher laden (vom Nutzer in popup.js eingetragen)
-  const stored = await chrome.storage.local.get("apiKey");
+  // Provider und API-Key aus dem lokalen Speicher laden
+  const stored = await chrome.storage.local.get(["provider", "apiKey"]);
+  const providerId = stored.provider || "anthropic";
   const apiKey = stored.apiKey;
 
   // Fehler wenn kein API-Key vorhanden
@@ -61,29 +95,17 @@ async function handleCleanPost(postText) {
     throw new Error("KEIN_API_KEY");
   }
 
-  // API-Anfrage zusammenbauen
-  const requestBody = {
-    model: "claude-sonnet-4-5",
-    max_tokens: 300,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: postText,
-      },
-    ],
-  };
+  // Provider-Config holen
+  const provider = PROVIDERS[providerId];
+  if (!provider) {
+    throw new Error(`Unbekannter Provider: ${providerId}`);
+  }
 
-  // API-Aufruf an Anthropic
-  const response = await fetch(ANTHROPIC_API_URL, {
+  // API-Aufruf mit Provider-spezifischen Headern und Body
+  const response = await fetch(provider.url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify(requestBody),
+    headers: provider.buildHeaders(apiKey),
+    body: JSON.stringify(provider.buildBody(postText)),
   });
 
   // Fehler bei HTTP-Fehlercodes (z.B. 401 Unauthorized, 429 Rate Limit)
@@ -93,9 +115,9 @@ async function handleCleanPost(postText) {
     throw new Error(`API_FEHLER: ${errorMsg}`);
   }
 
-  // Antwort parsen und den Text extrahieren
+  // Antwort parsen und den Text extrahieren (provider-spezifisch)
   const data = await response.json();
-  const cleanedText = data?.content?.[0]?.text;
+  const cleanedText = provider.extractText(data);
 
   if (!cleanedText) {
     throw new Error("Leere Antwort von der API erhalten.");

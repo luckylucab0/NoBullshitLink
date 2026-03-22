@@ -52,6 +52,30 @@
       margin-bottom: 16px;
     }
 
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #333;
+      background: #fafafa;
+      transition: border-color 0.15s;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    select:focus {
+      border-color: #0a66c2;
+      background-color: #fff;
+      box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.15);
+    }
+
     label {
       display: block;
       font-size: 13px;
@@ -190,9 +214,18 @@
     </div>
   </div>
 
+  <!-- Provider-Auswahl -->
+  <div class="form-gruppe">
+    <label for="provider">KI-Anbieter</label>
+    <select id="provider">
+      <option value="anthropic">Anthropic (Claude)</option>
+      <option value="openai">OpenAI (GPT)</option>
+    </select>
+  </div>
+
   <!-- API-Key Formular -->
   <div class="form-gruppe">
-    <label for="apiKey">Anthropic API-Key</label>
+    <label for="apiKey" id="apiKeyLabel">API-Key</label>
     <input
       type="password"
       id="apiKey"
@@ -200,9 +233,9 @@
       autocomplete="off"
       spellcheck="false"
     />
-    <p class="hinweis">
+    <p class="hinweis" id="apiKeyHinweis">
       Den API-Key gibt es unter
-      <a href="https://console.anthropic.com/settings/keys" target="_blank">
+      <a id="apiKeyLink" href="https://console.anthropic.com/settings/keys" target="_blank">
         console.anthropic.com
       </a>.
       Er wird nur lokal in deinem Browser gespeichert.
