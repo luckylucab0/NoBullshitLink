@@ -107,9 +107,6 @@ function verarbeitePost(postContainer) {
   // Nicht doppelt verarbeiten
   if (postContainer.dataset[VERARBEITET_MARKER]) return;
 
-  // Nur echte Post-Container verarbeiten (müssen eine bestimmte Mindestgröße haben)
-  if (postContainer.offsetHeight < 50) return;
-
   postContainer.dataset[VERARBEITET_MARKER] = "true";
 
   // Button-Wrapper erstellen
@@ -247,8 +244,12 @@ function initialisiere() {
   setTimeout(scanneSeite, 2000);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initialisiere);
-} else {
-  initialisiere();
+try {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialisiere);
+  } else {
+    initialisiere();
+  }
+} catch (e) {
+  console.error("[LinkedIn Cleaner] Initialisierungsfehler:", e);
 }
